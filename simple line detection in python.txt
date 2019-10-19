@@ -1,0 +1,82 @@
+#https://www.openmaker.co.kr/single-post/2017/03/17/Simple-Line-Detection-using-Raspberry-Pi-camera-and-OpenCV-Python-for-drone-applications
+#1. Getting started with Python and picamera library
+#Import modules
+import picamera
+import picamera.array 
+#sub-module of picamera that enables us to get NumPy(allow multidimensional array)arrays from the Pi camera
+import time
+import cv2
+
+#Initialize camera
+camera = picamera.PiCamera() 
+camera.resolution = (640,480)
+rawCapture = picamera.array.PiRGBArray(camera)
+#Let camera warm up
+time.sleep(0.1)
+
+#Capture image
+
+camera.capture(rawCapture, format="bgr") 
+#bgr-format of the photo that is used in cv2 image processing 
+
+img = rawCapture.array
+ 
+#displays the image output on the screen and waits for a key input before closing the window and ending the script.
+cv2.imshow("picamera test", img)
+
+cv2.waitKey(0)
+
+#2. Simple line detection on still images using OpenCV
+
+#Import modules
+import picamera
+import picamera.array 
+#sub-module of picamera that enables us to get NumPy(allow multidimensional array)arrays from the Pi camera
+import time
+import cv2
+
+
+#Initialize camera
+camera = picamera.PiCamera()
+camera.resolution = (640,480)
+rawCapture = picamera.array.PiRGBArray(camera)
+#Let camera warm up
+time.sleep(0.1)
+
+#Capture image
+camera.capture(rawCapture, format="bgr")
+img = rawCapture.array
+
+#Convert to Grayscale
+#input image - first argument, color space conversion code - second parameter
+#cv2.COLOR_BGR2GRAY - color space conversion code
+#normal format - cv2 API, to convert from BGR to grayscale hence we use the constant cv2.COLOR_BGR2GRAY
+#API conversion explained in https://docs.opencv.org/2.4/index.html
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+#Blur image to reduce noise
+#second argument specifies the width and height of the kernel(positive, odd number), larger kernel size will blur the image more.
+#third argument to cv2.GaussianBlur specifies the standard deviation in X and Y directions, when given 0 these will be calculated automatically based on kernel size.
+blurred = cv2.GaussianBlur(gray, (9, 9), 0)
+
+#Perform canny edge-detection
+#to returns a binary image (image containing only black and white pixels), edge-white, others-black.
+#parameters specify the minVal and the maxVal thresholds
+#maxVal=3*minVal.
+edged = cv2.Canny(blurred, 50, 150)
+
+#Perform hough lines probalistic transform
+#all input images to Hough transform should be binary
+#second and third parameters - distance and angle resolutions for the Hough transform
+#10 - accumulator threshold for Hough, can be decreased or increased to tune the line detection.
+#80 -  minimum line length - lines shorter than 80 pixels will be rejected, can be tuned to reject short lines that we probably are not interested in
+#last argument - the maximum gap allowed between lines in the image
+lines = cv2.HoughLinesP(edged,1,np.pi/180,10,80,1)
+
+#Draw lines on input image
+if(lines != None):
+    for x1,y1,x2,y2 in lines[0]:
+        cv2.line(resized,(x1,y1),(x2,y2),(0,255,0),2)
+
+cv2.imshow("line detect test", img) 
+cv2.waitKey(0)
